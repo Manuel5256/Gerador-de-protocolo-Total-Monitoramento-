@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Total Monitoramento</title>
+<style>
+body { margin:0; font-family:sans-serif; background:#121212; color:#fff; display:flex; justify-content:center; padding:30px;}
+.container { 
+  background:#1e1e1e; 
+  border-radius:12px; 
+  padding:20px; 
+  max-width:400px; 
+  width:100%; 
+  box-shadow: 0 0 10px #ffcc0088, 0 0 0 2px #ffcc00;
+  border-left: 3px solid #ffcc00aa;  
+  border-right: 3px solid #ffcc00aa;
+  transition: box-shadow 0.3s, border-color 0.3s;
+  display:flex;
+  flex-direction:column;
+}
+.container:hover {
+  box-shadow: 0 0 15px #ffcc00bb, 0 0 0 2px #ffcc00;
+}
+.container.ativo {
+  box-shadow: 0 0 25px #ffff66cc, 0 0 0 2px #ffff66;
+  border-left-color: #ffff66cc;
+  border-right-color: #ffff66cc;
+}
+h2 { color:#ffcc00; text-align:center; margin-bottom:20px;}
+label { color:#ffcc00; font-weight:600;}
+input, select, textarea, button { width:100%; padding:10px; margin-bottom:12px; border-radius:6px; border:none; font-size:1rem; background:#333; color:#fff;}
+textarea { resize: vertical;}
+button { background:#ffcc00; color:#121212; font-weight:700; cursor:pointer;}
+button:hover { background:#e6b800;}
+
+/* borda amarela e brilho ao focar */
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border: 2px solid #ffcc00;
+    box-shadow: 0 0 10px #ffcc00aa;
+}
+
+/* rodapé */
+footer {
+  margin-top:10px;
+  text-align:center;
+  font-size:0.8rem;
+  color:#ffcc00aa;
+  border-top: 1px solid #ffcc0033;
+  padding-top:8px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Total Monitoramento</h2>
+
+  <label>Nome do Cliente:</label>
+  <input list="listaClientes" id="nome" placeholder="Digite o nome do cliente">
+  <datalist id="listaClientes"></datalist>
+
+  <label>Período:</label>
+  <select id="periodo">
+    <option>Boa noite</option>
+    <option>Boa madrugada</option>
+    <option>Bom dia</option>
+    <option>Boa tarde</option>
+  </select>
+
+  <label>Tipo de Local:</label>
+  <select id="local">
+    <option>residência</option>
+    <option>empresa</option>
+  </select>
+
+  <label>Evento:</label>
+  <select id="evento">
+    <option value="ativado">ativado</option>
+    <option value="desativado">desativado</option>
+  </select>
+
+  <button onclick="gerar()">Gerar Mensagem</button>
+
+  <label>Mensagem:</label>
+  <textarea id="mensagem" rows="5" readonly></textarea>
+  <button onclick="copiar()">Copiar Mensagem</button>
+
+  <footer>© 2026 Total Monitoramento. Criado por Manuel.</footer>
+</div>
+
+<script>
+// Nomes para tratamento
+const nomesMas = ['celestino','manuel','mizael','ezequiel','carlos','joão','roberto'];
+const nomesFem = ['nilce','maria','ana','paula','juliana','mariana'];
+
+// Plantões
+const plantao = [
+  {inicio:new Date(2026,1,23,19,0),fim:new Date(2026,1,24,7,0), operador:'Manuel'},
+  {inicio:new Date(2026,1,24,7,0),fim:new Date(2026,1,24,19,0), operador:'Mizael'},
+  {inicio:new Date(2026,1,24,19,0),fim:new Date(2026,1,25,7,0), operador:'Ezequiel'}
+];
+
+function operadorAtual() {
+  const agora = new Date();
+  for(let t of plantao) if(agora>=t.inicio && agora<t.fim) return t.operador;
+  return 'Operador indisponível';
+}
+
+function tratamentoDoNome(nome){
+  const n = nome.toLowerCase();
+  if(nomesMas.includes(n)) return 'Sr.';
+  if(nomesFem.includes(n)) return 'Sra.';
+  return '';
+}
+
+// Carrega nomes salvos do localStorage ou usa lista inicial
+let nomesSugestao = JSON.parse(localStorage.getItem('nomesSugestao')) || ['Selestino', 'Nilce', 'Carlos', 'Maria', 'João', 'Ana', 'Roberto'];
+
+function atualizarDatalist() {
+  const lista = document.getElementById('listaClientes');
+  lista.innerHTML = '';
+  nomesSugestao.forEach(nome => {
+    const tr = tratamentoDoNome(nome);
+    const option = document.createElement('option');
+    option.value = `${tr} ${nome}`;
+    lista.appendChild(option);
+  });
+}
+
+atualizarDatalist();
+
+function gerar(){
+  let nomeInput = document.getElementById('nome').value.trim();
+  if(!nomeInput) return;
+
+  let nome = nomeInput.replace(/^Sr\. |^Sra\. /,'').trim();
+
+  if(!nomesSugestao.some(n=>n.toLowerCase()===nome.toLowerCase())){
+    nomesSugestao.push(nome);
+    localStorage.setItem('nomesSugestao', JSON.stringify(nomesSugestao));
+    atualizarDatalist();
+  }
+
+  const periodo = document.getElementById('periodo').value;
+  const local = document.getElementById('local').value;
+  const evento = document.getElementById('evento').value;
+
+  const operador = operadorAtual();
+  const tratamento = tratamentoDoNome(nome);
+
+  const mensagem = evento==='ativado' ?
+    `Olá, ${periodo}! ${tratamento} ${nome}. Aqui é ${operador}, operador de CFTV da Total Monitoramento, informando que por motivo de segurança o sistema de alarme da sua ${local} foi ativado com sucesso.` :
+    `Olá, ${periodo}! ${tratamento} ${nome}. Aqui é ${operador}, operador de CFTV da Total Monitoramento, informando que o sistema de alarme da sua ${local} foi desativado com sucesso.`;
+
+  document.getElementById('mensagem').value = mensagem;
+
+  // Efeito amarelo temporário no container
+  const container = document.querySelector('.container');
+  container.classList.add('ativo');
+  setTimeout(()=> container.classList.remove('ativo'), 300);
+}
+
+function copiar(){
+  const txt = document.getElementById('mensagem');
+  if(!txt.value) return;
+  navigator.clipboard.writeText(txt.value).catch(()=>{});
+}
+</script>
+</body>
+</html>
